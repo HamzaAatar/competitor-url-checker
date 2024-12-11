@@ -66,7 +66,6 @@ async def process_sheet_data(sheet_data: SheetData):
             processed_data.append(processed_row)
 
         process_time = time.time() - start_time
-        print(process_time)
         return {
             "process_time": process_time,
             "processed_data": processed_data,
