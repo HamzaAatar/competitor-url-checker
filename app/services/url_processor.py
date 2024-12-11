@@ -1,5 +1,4 @@
 import asyncio
-from datetime import datetime
 import httpx
 import htmldate
 import logging
@@ -41,7 +40,7 @@ class URLProcessor:
 
             return {
                 "url": url,
-                "last_updated": last_updated.isoformat() if last_updated else None,
+                "last_updated": last_updated,
             }
         except Exception as e:
             self.logger.error(f"Error processing {url}: {e}")
