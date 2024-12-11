@@ -36,6 +36,7 @@ class URLProcessor:
                 response.text,
                 original_date=response.headers.get("Last-Modified"),
                 verbose=False,
+                outputformat="%d %b %Y",
             )
 
             return {

@@ -1,6 +1,5 @@
 import asyncio
 from app.services.url_processor import URLProcessor
-from app.services.email_sender import EmailSender
 
 # Sample data mimicking Google Sheets input
 SAMPLE_SHEET_DATA = [
@@ -38,7 +37,6 @@ SAMPLE_SHEET_DATA = [
 async def main():
     # Initialize services
     url_processor = URLProcessor()
-    email_sender = EmailSender()
 
     # Process data starting from the second row (skipping headers)
     for row in SAMPLE_SHEET_DATA[1:]:
@@ -64,8 +62,7 @@ async def main():
         # Add logic to create email updates based on results
 
         if email_updates:
-            email_result = email_sender.send_updates_email(email_updates)
-            print("Email result:", email_result)
+            print("Email result:", email_updates)
 
 
 if __name__ == "__main__":
