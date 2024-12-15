@@ -1,14 +1,23 @@
 from fastapi import FastAPI
 from app.api import auth, endpoints, jobs
 from app.core.database import async_engine, Base
+from contextlib import asynccontextmanager
+
 
 app = FastAPI(title="Competitor URL Checker")
 
 
-@app.on_event("startup")
-async def startup():
+# @app.on_event("startup")
+# async def startup():
+#     async with async_engine.begin() as conn:
+#         await conn.run_sync(Base.metadata.create_all)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    yield
 
 
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
