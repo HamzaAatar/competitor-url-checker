@@ -1,5 +1,11 @@
 fastapi[standard]
+sqlalchemy
+alembic
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
 httpx
 htmldate
 pydantic
 python-dotenv
+asyncpg
