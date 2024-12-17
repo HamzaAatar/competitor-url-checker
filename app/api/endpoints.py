@@ -21,7 +21,10 @@ async def process_sheet_data(sheet_data: SheetData):
             processed_row = row.copy()
 
             # Original competitor last updated dates
-            original_competitor_dates = [row[5], row[7], row[9]]
+            original_competitor_dates = [
+                datetime.strptime(date, "%d %b %Y") if date and date != "N/A" else None
+                for date in [row[5], row[7], row[9]]
+            ]
 
             # Our URL processing (unchanged)
             our_url_result = await url_processor.extract_last_updated(our_url)
@@ -53,19 +56,15 @@ async def process_sheet_data(sheet_data: SheetData):
             )
 
             competitors_newer = 0
-            for result, (original_url, original_row_index) in zip(
-                competitor_results, non_empty_competitor_urls
+            for (result, (original_url, original_row_index)), original_date in zip(
+                zip(competitor_results, non_empty_competitor_urls),
+                original_competitor_dates,
             ):
                 # Update only the specific column for the non-empty URL
                 if result["last_updated"]:
                     processed_row[original_row_index] = result["last_updated"]
                 else:
                     processed_row[original_row_index] = "N/A"
-
-                # Check if the last updated date has changed from the original input
-                original_date = original_competitor_dates[
-                    non_empty_competitor_urls.index((original_url, original_row_index))
-                ]
 
                 # Existing newer competitor logic with date change check
                 if our_last_updated and result["last_updated"]:
@@ -77,7 +76,10 @@ async def process_sheet_data(sheet_data: SheetData):
                         days_older = (competitor_last_updated - our_last_updated).days
 
                         # Only add to email updates if the date is different from the original
-                        if result["last_updated"] != original_date:
+                        if (
+                            original_date is None
+                            or competitor_last_updated != original_date
+                        ):
                             email_updates.append(
                                 {
                                     "competitor_url": result["url"],
