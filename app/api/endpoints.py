@@ -9,6 +9,30 @@ router = APIRouter()
 url_processor = URLProcessor()
 
 
+def parse_flexible_date(date_str):
+    """
+    Parse date from multiple possible formats
+    Supports:
+    - "%d %b %Y"
+    - JavaScript-style date strings
+    """
+    if not date_str or date_str == "N/A":
+        return None
+
+    date_formats = [
+        "%d %b %Y",  # Original format
+        "%a %b %d %Y %H:%M:%S %Z(%z)",  # JavaScript-style date
+    ]
+
+    for fmt in date_formats:
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            continue
+
+    raise ValueError(f"Unable to parse date: {date_str}")
+
+
 @router.post("/check-urls")
 async def process_sheet_data(sheet_data: SheetData):
     try:
@@ -22,14 +46,13 @@ async def process_sheet_data(sheet_data: SheetData):
 
             # Original competitor last updated dates
             original_competitor_dates = [
-                datetime.strptime(date, "%d %b %Y") if date and date != "N/A" else None
-                for date in [row[5], row[7], row[9]]
+                parse_flexible_date(date) for date in [row[5], row[7], row[9]]
             ]
 
-            # Our URL processing (unchanged)
+            # Our URL processing
             our_url_result = await url_processor.extract_last_updated(our_url)
             our_last_updated = (
-                datetime.strptime(our_url_result["last_updated"], "%d %b %Y")
+                parse_flexible_date(our_url_result["last_updated"])
                 if our_url_result["last_updated"]
                 else None
             )
@@ -62,14 +85,17 @@ async def process_sheet_data(sheet_data: SheetData):
             ):
                 # Update only the specific column for the non-empty URL
                 if result["last_updated"]:
-                    processed_row[original_row_index] = result["last_updated"]
+                    parsed_result_date = parse_flexible_date(result["last_updated"])
+                    processed_row[original_row_index] = parsed_result_date.strftime(
+                        "%d %b %Y"
+                    )
                 else:
                     processed_row[original_row_index] = "N/A"
 
                 # Existing newer competitor logic with date change check
                 if our_last_updated and result["last_updated"]:
-                    competitor_last_updated = datetime.strptime(
-                        result["last_updated"], "%d %b %Y"
+                    competitor_last_updated = parse_flexible_date(
+                        result["last_updated"]
                     )
                     if competitor_last_updated > our_last_updated:
                         competitors_newer += 1
