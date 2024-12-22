@@ -1,5 +1,6 @@
 fastapi[standard]
 httpx
-htmldate
+htmldate[speed]
 pydantic
 python-dotenv
+bs4

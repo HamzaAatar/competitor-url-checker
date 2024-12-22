@@ -3,6 +3,7 @@ import httpx
 import htmldate
 import logging
 from typing import List, Dict
+from bs4 import BeautifulSoup
 
 from app.core.config import settings
 
@@ -32,8 +33,12 @@ class URLProcessor:
             }
             response = await self.http_client.get(url, headers=headers)
 
+            # Parse HTML and extract body content
+            soup = BeautifulSoup(response.text, "html.parser")
+            body_content = str(soup.body) if soup.body else response.text
+
             last_updated = htmldate.find_date(
-                response.text,
+                body_content,
                 original_date=response.headers.get("Last-Modified"),
                 verbose=False,
                 outputformat="%d %b %Y",
