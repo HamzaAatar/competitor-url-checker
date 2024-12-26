@@ -83,7 +83,6 @@ async def process_sheet_data(sheet_data: SheetData):
                 zip(competitor_results, non_empty_competitor_urls),
                 original_competitor_dates,
             ):
-                # Update only the specific column for the non-empty URL
                 if result["last_updated"]:
                     parsed_result_date = parse_flexible_date(result["last_updated"])
                     processed_row[original_row_index] = parsed_result_date.strftime(
@@ -92,33 +91,25 @@ async def process_sheet_data(sheet_data: SheetData):
                 else:
                     processed_row[original_row_index] = "N/A"
 
-                # Existing newer competitor logic with date change check
+                # Compare dates only if both are available
                 if our_last_updated and result["last_updated"]:
                     competitor_last_updated = parse_flexible_date(
                         result["last_updated"]
                     )
-                    if competitor_last_updated > our_last_updated:
+                    
+                    # Check if dates are different AND competitor date is newer
+                    if (competitor_last_updated != original_date and 
+                        competitor_last_updated > our_last_updated):
                         competitors_newer += 1
                         days_older = (competitor_last_updated - our_last_updated).days
-
-                        # Only add to email updates if the date is different from the original
-                        if (
-                            original_date is None
-                            or competitor_last_updated != original_date
-                        ):
-                            email_updates.append(
-                                {
-                                    "competitor_url": result["url"],
-                                    "search_volume": search_volume,
-                                    "our_url": our_url,
-                                    "our_page_date": our_last_updated.strftime(
-                                        "%d %b %Y"
-                                    )
-                                    if our_last_updated
-                                    else "N/A",
-                                    "days_older": days_older,
-                                }
-                            )
+                        
+                        email_updates.append({
+                            "competitor_url": result["url"],
+                            "search_volume": search_volume,
+                            "our_url": our_url,
+                            "our_page_date": our_last_updated.strftime("%d %b %Y"),
+                            "days_older": days_older,
+                        })
 
             processed_row[10] = competitors_newer
             processed_data.append(processed_row)
