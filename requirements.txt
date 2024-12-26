@@ -3,4 +3,5 @@ httpx
 htmldate[speed]
 pydantic
 python-dotenv
-bs4
+redis
+lxml
