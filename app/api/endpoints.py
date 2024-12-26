@@ -96,20 +96,27 @@ async def process_sheet_data(sheet_data: SheetData):
                     competitor_last_updated = parse_flexible_date(
                         result["last_updated"]
                     )
-                    
+
                     # Check if dates are different AND competitor date is newer
-                    if (competitor_last_updated != original_date and 
-                        competitor_last_updated > our_last_updated):
+                    if competitor_last_updated > our_last_updated:
                         competitors_newer += 1
-                        days_older = (competitor_last_updated - our_last_updated).days
-                        
-                        email_updates.append({
-                            "competitor_url": result["url"],
-                            "search_volume": search_volume,
-                            "our_url": our_url,
-                            "our_page_date": our_last_updated.strftime("%d %b %Y"),
-                            "days_older": days_older,
-                        })
+
+                        if competitor_last_updated != original_date:
+                            days_older = (
+                                competitor_last_updated - our_last_updated
+                            ).days
+
+                            email_updates.append(
+                                {
+                                    "competitor_url": result["url"],
+                                    "search_volume": search_volume,
+                                    "our_url": our_url,
+                                    "our_page_date": our_last_updated.strftime(
+                                        "%d %b %Y"
+                                    ),
+                                    "days_older": days_older,
+                                }
+                            )
 
             processed_row[10] = competitors_newer
             processed_data.append(processed_row)
