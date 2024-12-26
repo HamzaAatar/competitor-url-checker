@@ -44,11 +44,6 @@ async def process_sheet_data(sheet_data: SheetData):
             search_volume = row[1]
             processed_row = row.copy()
 
-            # Original competitor last updated dates
-            original_competitor_dates = [
-                parse_flexible_date(date) for date in [row[5], row[7], row[9]]
-            ]
-
             # Our URL processing
             our_url_result = await url_processor.extract_last_updated(our_url)
             our_last_updated = (
@@ -61,27 +56,26 @@ async def process_sheet_data(sheet_data: SheetData):
                 our_last_updated.strftime("%d %b %Y") if our_last_updated else "N/A"
             )
 
-            # Competitor URLs with explicit handling for missing URLs
-            competitor_urls_with_indices = [
-                (row[4], 5),  # URL and its corresponding row index
-                (row[6], 7),
-                (row[8], 9),
+            # Competitor URLs with indices and original dates
+            competitor_data = [
+                (row[4], 5, parse_flexible_date(row[5])),  # (URL, index, original_date)
+                (row[6], 7, parse_flexible_date(row[7])),
+                (row[8], 9, parse_flexible_date(row[9])),
             ]
 
-            # Filter out empty URLs while preserving their original indices
-            non_empty_competitor_urls = [
-                (url, index) for (url, index) in competitor_urls_with_indices if url
+            # Filter out empty URLs while keeping corresponding dates
+            non_empty_competitor_data = [
+                (url, index, date) for (url, index, date) in competitor_data if url
             ]
 
             # Process only non-empty URLs
             competitor_results = await url_processor.process_urls(
-                [url for (url, _) in non_empty_competitor_urls]
+                [url for (url, _, _) in non_empty_competitor_data]
             )
 
             competitors_newer = 0
-            for (result, (original_url, original_row_index)), original_date in zip(
-                zip(competitor_results, non_empty_competitor_urls),
-                original_competitor_dates,
+            for result, (original_url, original_row_index, original_date) in zip(
+                competitor_results, non_empty_competitor_data
             ):
                 if result["last_updated"]:
                     parsed_result_date = parse_flexible_date(result["last_updated"])
@@ -97,7 +91,7 @@ async def process_sheet_data(sheet_data: SheetData):
                         result["last_updated"]
                     )
 
-                    # Check if dates are different AND competitor date is newer
+                    # Check if competitor date is newer
                     if competitor_last_updated > our_last_updated:
                         competitors_newer += 1
 
